@@ -10,7 +10,8 @@ import {
   Anchor,
   Select,
   Box,
-  Text
+  Text,
+  Pagination
 } from '@mantine/core';
 import { IconSearch, IconArrowsSort } from '@tabler/icons-react';
 import { Link } from 'react-router-dom';
@@ -47,6 +48,8 @@ export function ResourceList() {
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState<keyof Launch | null>(null);
   const [reverse, setReverse] = useState(false);
+  const [page, setPage] = useState(1);
+  const rowsPerPage = 50;
 
   const processedData = useMemo(() => {
     if (!data) return [];
@@ -65,7 +68,6 @@ export function ResourceList() {
       result.sort((a, b) => {
         const aValue = a[sortBy];
         const bValue = b[sortBy];
-
 
         if (aValue == null) return 1;
         if (bValue == null) return -1;
@@ -93,6 +95,14 @@ export function ResourceList() {
 
     return result;
   }, [data, search, sortBy, reverse]);
+
+  const paginatedData = useMemo(() => {
+    const start = (page - 1) * rowsPerPage;
+    const end = start + rowsPerPage;
+    return processedData.slice(start, end);
+  }, [processedData, page]);
+
+  const totalPages = Math.ceil(processedData.length / rowsPerPage);
 
   if (isLoading) return <Loader size="xl" variant="dots" />;
   if (isError) return <Text color="red">Error: {error?.message}</Text>;
@@ -146,7 +156,7 @@ export function ResourceList() {
             </tr>
           </thead>
           <tbody>
-            {processedData.map((launch) => (
+            {paginatedData.map((launch) => (
               <tr key={launch.id}>
                 <td>{launch.flight_number}</td>
                 <td>
@@ -174,6 +184,17 @@ export function ResourceList() {
           </tbody>
         </Table>
       </ScrollArea>
+
+      <Group position="center" mt="xl">
+        <Pagination
+          total={totalPages}
+          value={page}
+          onChange={setPage}
+          size="md"
+          radius="md"
+          withEdges
+        />
+      </Group>
     </Box>
   );
 }
